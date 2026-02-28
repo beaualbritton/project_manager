@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from api.models import Company, Task, Employee, Team, SubTask
+from api.models import Task, Employee, Team, SubTask, Company
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     # These fields are for the User model
@@ -9,15 +10,19 @@ class RegisterSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(required=False, allow_blank=True)
 
     # This field is for the Employee model
-    companyID = serializers.UUIDField(write_only=True)
+    company_id = serializers.UUIDField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'first_name', 'last_name', 'companyID']
+        fields = ['username', 'email', 'password', 'first_name', 'last_name', 'company_id']
 
     def create(self, validated_data):
         # 1. Extract the data meant for the Employee/Company
-        company_id = validated_data.pop('compID')
+        company_id = validated_data.pop('company_id')
+        try:
+            company = Company.objects.get(compID=company_id)
+        except Company.DoesNotExist:
+            raise serializers.ValidationError({"companyID": "Company not found"})
 
         # 2. Create the User
         user = User.objects.create_user(

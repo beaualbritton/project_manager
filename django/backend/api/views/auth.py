@@ -40,14 +40,12 @@ def login(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register(request):
+    print("REQUEST DATA:", request.data)  # add this
     serializer = RegisterSerializer(data=request.data)
-
     if serializer.is_valid():
         serializer.save()
-        return Response({
-            "message": "User and Employee profile created successfully."
-        }, status=status.HTTP_201_CREATED)
-
+        return Response({"message": "User and Employee profile created successfully."}, status=status.HTTP_201_CREATED)
+    print("SERIALIZER ERRORS:", serializer.errors)  # and this
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
