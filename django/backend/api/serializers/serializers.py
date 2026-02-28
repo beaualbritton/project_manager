@@ -16,9 +16,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password', 'first_name', 'last_name', 'companyID']
 
     def create(self, validated_data):
-        # 1. Extract the data meant for the Employee/Company
-        company_id = validated_data.pop('compID')
-
+        # 1. Extract the data
+        company_id = validated_data.pop('companyID')
+        
         # 2. Create the User
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -27,19 +27,24 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', '')
         )
+        
+        # 3. Find the Company
+        company = Company.objects.filter(compID=company_id).first()
 
-        # 3. Find the Company and create the Employee
-        try:
-            company = Company.objects.get(compID=company_id)
-        except Company.DoesNotExist:
-            # If for some reason the company is missing, we still need to create the profile
-            company = None
-
-        Employee.objects.create(
+        # 4. Create the Employee
+        employee = Employee.objects.create(
             user=user,
             company=company
         )
 
+        # --- MINIMAL CHANGE START ---
+        # Find the first team in that company to set as default
+        if company:
+            default_team = company.teams.first() # Or: Team.objects.filter(company=company, name="General").first()
+            if default_team:
+                employee.teams.add(default_team)
+        # --- MINIMAL CHANGE END ---
+        
         return user
 
 
