@@ -1,29 +1,53 @@
 <script lang="ts">
-import { login } from "$lib/api/login";
-import LoginForm from "$lib/components/forms/login_form.svelte";
-
-let status: any= $state();
-let message: string = $state("")
-
-
-async function loginSubmit(username: string, password: string)
-{
-  let response = await login(username, password);
-}
-
+	import { Button } from '$lib/components/ui/button';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 </script>
 
-<main>
-  <LoginForm onSubmit={loginSubmit}/>
-
-  <h2>
-    login in
-  </h2>
-
-  {#if message}
-    {message}
-  {:else}
-    enter username and password
-  {/if}
-
-</main>
+<div class="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
+	<div class="hidden bg-muted lg:block">
+		<div class="flex flex-col justify-center items-center h-full">
+			<h1 class="text-4xl font-bold">ProjectFlow</h1>
+			<p class="text-lg mt-4">Your awesome project management tool</p>
+		</div>
+	</div>
+	<div class="flex items-center justify-center py-12">
+		<div class="mx-auto grid w-[350px] gap-6">
+			<Card>
+				<CardHeader>
+					<CardTitle class="text-2xl">Login</CardTitle>
+					<CardDescription>Enter your username and password below to login to your account</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div class="grid gap-4">
+						<div class="grid gap-2">
+							<Label for="uesrname">Username</Label>
+							<Input id="username" type="text" placeholder="m@example.com" required />
+						</div>
+						<div class="grid gap-2">
+							<div class="flex items-center">
+								<Label for="password">Password</Label>
+							</div>
+							<Input id="password" type="password" required />
+						</div>
+						<Button type="submit" class="w-full">Login</Button>
+					</div>
+				</CardContent>
+				<CardFooter>
+					<div class="mt-4 text-center text-sm">
+						Don&apos;t have an account?
+						<a href="/register" class="underline"> Sign up </a>
+					</div>
+				</CardFooter>
+			</Card>
+		</div>
+	</div>
+</div>
