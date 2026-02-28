@@ -29,6 +29,9 @@
 				<CardContent>
 					<form method="POST" action="?/register" class="grid gap-4">
 						<div class="grid gap-2">
+              {#if form?.error}
+                <p class="text-sm text-red-500">{form.error}</p>
+              {/if}
 							<Label for="username">Username</Label>
 							<Input id="username" name="username" required />
 						</div>
