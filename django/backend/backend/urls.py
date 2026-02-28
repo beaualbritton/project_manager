@@ -16,8 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import check, csrf_token, login, register, logout, get_employee, get_team, add_team
-from api.views import get_tasks, add_task, delete_task, remove_task_from
+from api.views import check, csrf_token, login, register, logout, get_employee, get_team, add_team, get_employee_by_username
+from api.views import get_tasks, add_task, delete_task, remove_task_from, add_employee
 from api.views import add_subtask, delete_subtask, update_subtask_status
 from api.views.gemini import GeminiChatView
 
@@ -31,8 +31,10 @@ urlpatterns = [
     path('api/auth/logout/', logout),
 
     path('api/employees/get/', get_employee),
+    path('api/employees/get_by_username/', get_employee_by_username),
     path('api/teams/get/', get_team),
     path('api/teams/add/', add_team),
+    path('api/teams/add_employee/', add_employee),
     path('api/tasks/get/', get_tasks),
     path('api/tasks/add/', add_task),
     path('api/tasks/delete/', delete_task),

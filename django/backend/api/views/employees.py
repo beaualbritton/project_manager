@@ -22,5 +22,23 @@ def get_employee(request):
     # By using many=True, DRF always returns a JSON array [] 
     # even if there is only one item or zero items.
     serializer = EmployeeListSerializer(queryset, many=True)
-    
+
+    return Response(serializer.data)
+
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
+def get_employee_by_username(request):
+    username = request.data.get('username') or request.query_params.get('username')
+
+    queryset = Employee.objects.all().select_related('user', 'company').prefetch_related('teams')
+
+    # If a username was provided, filter through the 'user' relationship
+    if username:
+        # Note the double underscore: user__username
+        queryset = queryset.filter(user__username=username)
+
+    serializer = EmployeeListSerializer(queryset, many=True)
+
     return Response(serializer.data)
