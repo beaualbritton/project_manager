@@ -44,24 +44,33 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class EmployeeListSerializer(serializers.ModelSerializer):
-    # Pull fields from the related User model
-    username = serializers.CharField(source='user.username', read_only=True)
-    email = serializers.EmailField(source='user.email', read_only=True)
-    first_name = serializers.CharField(source='user.first_name', read_only=True)
-    last_name = serializers.CharField(source='user.last_name', read_only=True)
-
-    # Pull the company name instead of just the UUID
-    company_name = serializers.CharField(source='company.name', read_only=True)
+    # Mapping model fields to specific JSON keys with capitalization
+    EmployeeID = serializers.UUIDField(source='employeeID')
+    
+    # Concatenating first and last name
+    Name = serializers.SerializerMethodField()
+    
+    # Using get_position_display to get "Team Lead" instead of "LEAD"
+    Position = serializers.CharField(source='get_position_display')
+    
+    # Pulling just the UUIDs of the teams into a list
+    teamIDs = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        read_only=True, 
+        source='teams'
+    )
+    
+    # Pulling the specific company UUID
+    companyID = serializers.UUIDField(source='company.compID', allow_null=True)
+    
+    # Pulling email from the related User model
+    email = serializers.EmailField(source='user.email')
 
     class Meta:
         model = Employee
-        fields = [
-            'employeeID', 
-            'username', 
-            'email', 
-            'first_name', 
-            'last_name', 
-            'position', 
-            'company', 
-            'company_name'
-        ]
+        fields = ['EmployeeID', 'Name', 'Position', 'teamIDs', 'companyID', 'email']
+
+    def get_Name(self, obj):
+        # Combines first and last name, or falls back to username if names aren't set
+        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return full_name if full_name else obj.user.username
