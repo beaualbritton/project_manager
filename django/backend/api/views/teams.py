@@ -1,9 +1,30 @@
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from ..models import Team
-from ..serializers import TeamListSerializer
+from ..serializers import TeamListSerializer, TeamCreateSerializer # Import both
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def add_team(request):
+    """
+    Creates a new team.
+    Expected JSON: { "Name": "Backend Core", "compID": "uuid", "leaderID": "uuid" }
+    """
+    serializer = TeamCreateSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        new_team = serializer.save()
+        
+        # We use the ListSerializer for the response so the returned 
+        # data matches your specific JSON format exactly.
+        return Response(
+            TeamListSerializer(new_team).data, 
+            status=status.HTTP_201_CREATED
+        )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def get_team(request):
