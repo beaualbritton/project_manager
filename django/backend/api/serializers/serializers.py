@@ -17,8 +17,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # 1. Extract the data meant for the Employee/Company
-        company_id = validated_data.pop('companyID')
-        
+        company_id = validated_data.pop('compID')
+
         # 2. Create the User
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -27,7 +27,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', '')
         )
-        
+
         # 3. Find the Company and create the Employee
         try:
             company = Company.objects.get(compID=company_id)
@@ -39,5 +39,29 @@ class RegisterSerializer(serializers.ModelSerializer):
             user=user,
             company=company
         )
-        
+
         return user
+
+
+class EmployeeListSerializer(serializers.ModelSerializer):
+    # Pull fields from the related User model
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+
+    # Pull the company name instead of just the UUID
+    company_name = serializers.CharField(source='company.name', read_only=True)
+
+    class Meta:
+        model = Employee
+        fields = [
+            'employeeID', 
+            'username', 
+            'email', 
+            'first_name', 
+            'last_name', 
+            'position', 
+            'company', 
+            'company_name'
+        ]
