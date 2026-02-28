@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from ..models import Employee, Company
+from api.models import Task, Employee, Team, SubTask
 
 class RegisterSerializer(serializers.ModelSerializer):
     # These fields are for the User model
@@ -35,7 +35,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             # If for some reason the company is missing, we still need to create the profile
             company = None
 
-        Employee.objects.create(
         # 4. Create the Employee
         employee = Employee.objects.create(
             user=user,
