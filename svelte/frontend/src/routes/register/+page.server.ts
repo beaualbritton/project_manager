@@ -1,17 +1,22 @@
+// src/routes/register/+page.server.ts
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
+import { register } from '$lib/api/login';
 
 export const actions: Actions = {
-	register: async ({ request }) => {
-		const data = await request.formData();
-		const username = data.get('username');
-		const email = data.get('email');
-		const password = data.get('password');
-		const companyId = data.get('companyId');
+  register: async ({ request }) => {
+    const form = await request.formData();
+    const username = form.get('username') as string;
+    const email = form.get('email') as string;
+    const password = form.get('password') as string;
+    const companyId = form.get('companyId') as string;
 
-		// TODO: Add your registration logic here, e.g., call your backend API
+    const data = await register(username, password, email, companyId);
 
-		console.log('Registering user:', { username, email, password, companyId });
+    if (data.error) {
+      return fail(400, { error: JSON.stringify(data) });
+    }
 
-		return { success: true };
-	}
+    throw redirect(302, '/login');
+  }
 };
