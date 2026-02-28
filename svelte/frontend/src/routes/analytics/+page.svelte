@@ -1,24 +1,16 @@
 <!-- src/routes/analytics/+page.svelte -->
-<!-- src/routes/analytics/+page.svelte -->
 <script lang="ts">
-    // BEST PRACTICE: Import the auto-generated PageData type
     import type { PageData } from './$types';
 
-    // Svelte 5 syntax: Type the $props() with the generated PageData
     let { data }: { data: PageData } = $props();
-    
-    // Now `insights` is fully typed automatically based on what +page.server.ts returned!
-    let { insights } = data;
+    let { insights, taskContext } = data;
 
-    // Chat Interface State
     let query = $state('');
     let isQuerying = $state(false);
     let chatResponse = $state<string | null>(null);
 
-    // Helper to map severity to Tailwind colors
     function getSeverityStyles(severity: string, isAllClear: boolean) {
         if (isAllClear) return 'bg-emerald-50 border-emerald-200 text-emerald-900';
-        
         switch (severity) {
             case 'high': return 'bg-red-50 border-red-200 text-red-900';
             case 'medium': return 'bg-amber-50 border-amber-200 text-amber-900';
@@ -29,7 +21,6 @@
 
     function getBadgeStyles(severity: string, isAllClear: boolean) {
         if (isAllClear) return 'bg-emerald-100 text-emerald-800 ring-emerald-600/20';
-        
         switch (severity) {
             case 'high': return 'bg-red-100 text-red-800 ring-red-600/20';
             case 'medium': return 'bg-amber-100 text-amber-800 ring-amber-600/20';
@@ -40,28 +31,29 @@
 
     async function handleQuery() {
         if (!query.trim()) return;
-        
         isQuerying = true;
-        chatResponse = null; 
+        chatResponse = null;
 
-        setTimeout(() => {
-            if (query.toLowerCase().includes('budget')) {
-                chatResponse = "Based on current burn rates, the 'Design System Overhaul' is closest to going over budget. It has consumed $3,750 of its $5,000 allocation but still has 3 incomplete subtasks. I recommend reviewing the remaining scope with Sarah Chen.";
-            } else if (query.toLowerCase().includes('risk') || query.toLowerCase().includes('task')) {
-                chatResponse = "The 'User Authentication UI' is your highest risk right now. It was due 3 days ago and is still marked as 'Active'. You should check in with Marcus Johnson to see if he is blocked by the backend API.";
-            } else {
-                chatResponse = "I've analyzed the data. The team is generally performing well, but you have one overdue task (Auth UI) and one task running hot on budget (Design System). Would you like me to draft an update for the stakeholders?";
-            }
-            
-            isQuerying = false;
-        }, 1500);
+        try {
+            const res = await fetch('/api/gemini-query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, taskContext })
+            });
+            const data = await res.json();
+            chatResponse = data.answer ?? 'No response.';
+        } catch {
+            chatResponse = 'Error contacting Gemini.';
+        }
+
+        isQuerying = false;
+        query = '';
     }
 </script>
 
 <div class="min-h-screen bg-white p-4 md:p-8 font-sans text-gray-900">
     <div class="mx-auto max-w-4xl">
-        
-        <!-- Header -->
+
         <header class="mb-10 border-b border-gray-100 pb-6">
             <div class="flex items-center gap-3 mb-2">
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
@@ -71,25 +63,17 @@
                 </div>
                 <h1 class="text-3xl font-bold tracking-tight text-gray-900">AI Analyst Briefing</h1>
             </div>
-            <p class="text-lg text-gray-500 ml-13">Generated just now based on live project data.</p>
+            <p class="text-lg text-gray-500">Generated based on your live project data.</p>
         </header>
 
-        <!-- 1. Auto-Generated Insight Cards -->
+        <!-- Insight Cards -->
         <div class="mb-16 space-y-6">
             {#each insights as insight}
-                <div class="relative rounded-2xl border p-6 transition-all {getSeverityStyles(insight.severity, insight.isAllClear)}">
-                    
+                <div class="relative rounded-2xl border p-6 {getSeverityStyles(insight.severity, insight.isAllClear)}">
                     <div class="mb-3 flex items-start justify-between">
-                        <h2 class="text-sm font-bold uppercase tracking-wider opacity-80">
-                            {insight.category}
-                        </h2>
-                        
+                        <h2 class="text-sm font-bold uppercase tracking-wider opacity-80">{insight.category}</h2>
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {getBadgeStyles(insight.severity, insight.isAllClear)}">
-                            {#if insight.isAllClear}
-                                All Clear
-                            {:else}
-                                {insight.severity.charAt(0).toUpperCase() + insight.severity.slice(1)} Risk
-                            {/if}
+                            {insight.isAllClear ? 'All Clear' : `${insight.severity.charAt(0).toUpperCase() + insight.severity.slice(1)} Risk`}
                         </span>
                     </div>
 
@@ -109,28 +93,29 @@
             {/each}
         </div>
 
-        <!-- 2. Freeform Natural Language Query -->
+        <!-- Freeform Query -->
         <div class="border-t border-gray-100 pt-10">
             <h2 class="mb-6 text-xl font-bold text-gray-900">Ask follow-up questions</h2>
-            
+
             <form onsubmit={(e) => { e.preventDefault(); handleQuery(); }} class="relative">
                 <div class="overflow-hidden rounded-2xl border border-gray-300 shadow-sm focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500 transition-all">
-                    <textarea 
+                    <textarea
                         bind:value={query}
-                        rows="3" 
-                        class="block w-full resize-none border-0 bg-transparent py-4 pl-4 pr-12 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-lg sm:leading-relaxed" 
+                        rows="3"
+                        class="block w-full resize-none border-0 bg-transparent py-4 pl-4 pr-12 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-lg sm:leading-relaxed"
                         placeholder="e.g., Who is closest to going over budget? Which tasks are at risk this week?"
                     ></textarea>
-                    
-                    <!-- Submit Button inside textarea -->
                     <div class="absolute bottom-3 right-3">
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             disabled={isQuerying || !query.trim()}
-                            class="inline-flex items-center justify-center rounded-xl bg-purple-600 p-2 text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:opacity-50 transition-colors"
+                            class="inline-flex items-center justify-center rounded-xl bg-purple-600 p-2 text-white hover:bg-purple-500 disabled:opacity-50 transition-colors"
                         >
                             {#if isQuerying}
-                                <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
                             {:else}
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -141,9 +126,8 @@
                 </div>
             </form>
 
-            <!-- Inline Conversational Response -->
             {#if chatResponse}
-                <div class="mt-8 flex gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="mt-8 flex gap-4">
                     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-600">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />

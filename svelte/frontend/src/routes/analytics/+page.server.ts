@@ -1,42 +1,81 @@
 // src/routes/analytics/+page.server.ts
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { API_URL } from '$lib/config';
 
-// Define the shape internally (or move to $lib/types.ts)
 interface InsightCategory {
-    category: 'Budget Risk' | 'Scheduling' | 'Team Performance';
-    headline: string;
-    detail: string;
-    severity: 'low' | 'medium' | 'high';
-    isAllClear: boolean;
+  category: 'Budget Risk' | 'Scheduling' | 'Team Performance';
+  headline: string;
+  detail: string;
+  severity: 'low' | 'medium' | 'high';
+  isAllClear: boolean;
 }
 
-export const load: PageServerLoad = async () => {
-    const aiInsights: InsightCategory[] = [
-        {
-            category: 'Budget Risk',
-            headline: 'Frontend Core is approaching budget limits',
-            detail: 'The Design System Overhaul has burned 75% of its $5,000 budget while only being 50% complete. You may need to request a $1,500 overage approval by Friday.',
-            severity: 'medium',
-            isAllClear: false
-        },
-        {
-            category: 'Scheduling',
-            headline: 'Critical blocker on User Authentication UI',
-            detail: 'This task is currently 3 days past its deadline. Because it is a dependency for the Dashboard Analytics View, the entire sprint timeline is now at risk of slipping.',
-            severity: 'high',
-            isAllClear: false
-        },
-        {
-            category: 'Team Performance',
-            headline: 'Capacity is balanced and healthy',
-            detail: 'No team members are currently overallocated. Sarah and Marcus are maintaining a steady velocity with no flagged blockers in their recent activity.',
-            severity: 'low',
-            isAllClear: true 
-        }
-    ];
+const FALLBACK_INSIGHTS: InsightCategory[] = [
+  { category: 'Budget Risk', headline: 'Could not load insight', detail: 'Gemini did not respond. Check your API key.', severity: 'low', isAllClear: false },
+  { category: 'Scheduling', headline: 'Could not load insight', detail: 'Gemini did not respond. Check your API key.', severity: 'low', isAllClear: false },
+  { category: 'Team Performance', headline: 'Could not load insight', detail: 'Gemini did not respond. Check your API key.', severity: 'low', isAllClear: false },
+];
 
-    // SvelteKit automatically infers the type of this return object
-    return {
-        insights: aiInsights
-    };
-};;
+export const load: PageServerLoad = async ({ fetch, cookies }) => {
+  const sessionid = cookies.get('sessionid');
+  const csrftoken = cookies.get('csrftoken');
+  const headers = { 'Cookie': `sessionid=${sessionid}; csrftoken=${csrftoken}` };
+
+  // Fetch tasks for context
+  const tasksRes = await fetch(`${API_URL}/tasks/get/`, { headers });
+  if (!tasksRes.ok) throw redirect(302, '/login');
+  const tasksData = await tasksRes.json();
+  const tasks = tasksData.tasks ?? [];
+
+  const taskContext = JSON.stringify(tasks.map((t: any) => ({
+    name: t.name,
+    status: t.status,
+    budget: t.budget,
+    end_date: t.end_date,
+    team: t.team?.name,
+    subtasks_total: t.subtasks?.length ?? 0,
+    subtasks_complete: t.subtasks?.filter((s: any) => s.status === 'COMPLETE').length ?? 0,
+  })));
+
+  const prompt = `You are a project management analyst. Given these tasks: ${taskContext}
+
+Return ONLY a valid JSON array with exactly 3 objects. No markdown, no explanation, just the array.
+Each object must have these exact fields:
+- category: one of "Budget Risk", "Scheduling", or "Team Performance"
+- headline: short title string
+- detail: 1-2 sentence explanation string  
+- severity: one of "low", "medium", or "high"
+- isAllClear: boolean, true only if there are no issues in this category
+
+Example format:
+[{"category":"Budget Risk","headline":"...","detail":"...","severity":"medium","isAllClear":false},...]`;
+
+  let insights: InsightCategory[] = FALLBACK_INSIGHTS;
+
+  try {
+    const geminiRes = await fetch(`${API_URL}/chat/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken ?? '',
+        'Cookie': `sessionid=${sessionid}; csrftoken=${csrftoken}`
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (geminiRes.ok) {
+      const geminiData = await geminiRes.json();
+      const raw = geminiData.answer ?? '';
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      if (Array.isArray(parsed) && parsed.length === 3) {
+        insights = parsed;
+      }
+    }
+  } catch {
+    insights = FALLBACK_INSIGHTS;
+  }
+
+  return { insights, taskContext };
+};
