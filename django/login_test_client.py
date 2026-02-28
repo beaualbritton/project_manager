@@ -25,7 +25,6 @@ def login_test(endpoint, username, password):
             print(json.dumps(data, indent=4))
             
             # Extract the CSRF token from the response body (as provided by your view)
-            csrf_token = data.get('csrfToken')
             csrf_token = session.get("http://127.0.0.1:8000/api/auth/csrf/")
             print(f"\nCSRF Token received: {csrf_token}")
             
