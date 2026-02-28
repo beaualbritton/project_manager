@@ -36,10 +36,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             company = None
 
         Employee.objects.create(
+        # 4. Create the Employee
+        employee = Employee.objects.create(
             user=user,
             company=company
         )
 
+        # --- MINIMAL CHANGE START ---
+        # Find the first team in that company to set as default
+        if company:
+            default_team = company.teams.first() # Or: Team.objects.filter(company=company, name="General").first()
+            if default_team:
+                employee.teams.add(default_team)
+        # --- MINIMAL CHANGE END ---
+        
         return user
 
 
@@ -74,3 +84,26 @@ class EmployeeListSerializer(serializers.ModelSerializer):
         # Combines first and last name, or falls back to username if names aren't set
         full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
         return full_name if full_name else obj.user.username
+
+
+class TeamListSerializer(serializers.ModelSerializer):
+    # Mapping to your requested JSON format
+    teamID = serializers.UUIDField()
+    Name = serializers.CharField(source='name')
+    
+    # Extract list of Task UUIDs
+    TaskIDs = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        read_only=True, 
+        source='tasks'
+    )
+    
+    # Extract the UUID from the related Company model
+    compID = serializers.UUIDField(source='company.compID')
+    
+    # Extract the employeeID from the related Employee model
+    leaderID = serializers.UUIDField(source='leader.employeeID', allow_null=True)
+
+    class Meta:
+        model = Team
+        fields = ['teamID', 'Name', 'TaskIDs', 'compID', 'leaderID']

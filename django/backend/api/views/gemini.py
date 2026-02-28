@@ -7,6 +7,9 @@ from api.gemini_service import get_gemini_response
 class GeminiChatView(APIView):
     permission_classes = [AllowAny]
     
+from api.gemini_service import get_gemini_response
+
+class GeminiChatView(APIView):
     def post(self, request):
         prompt = request.data.get('prompt')
         if not prompt:
