@@ -30,8 +30,8 @@ urlpatterns = [
     path('api/auth/register/', register, name='register'),
     path('api/auth/logout/', logout),
 
-    path('api/employees/get', get_employee_list),
-    path('api/teams/get', get_employee_list),
+    path('api/employees/get', get_employee),
+    path('api/teams/get', get_team),
     path('api/tasks/get/', get_tasks),
     path('api/tasks/add/', add_task),
     path('api/tasks/delete/', delete_task),

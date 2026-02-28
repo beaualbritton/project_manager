@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Task, Employee, Team, SubTask
+from ..models import Task, Employee, Team, SubTask
 
 
 @api_view(["POST"])

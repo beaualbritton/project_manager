@@ -14,6 +14,7 @@ from pathlib import Path
 import environ
 import dj_database_url
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -30,6 +31,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
+GEMINI_API_KEY = env("GEMINI_API_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

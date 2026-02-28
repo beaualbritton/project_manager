@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from ..models import Employee, Company
+from api.models import Task, Employee, Team, SubTask
 
 class RegisterSerializer(serializers.ModelSerializer):
     # These fields are for the User model
@@ -16,9 +16,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password', 'first_name', 'last_name', 'companyID']
 
     def create(self, validated_data):
-        # 1. Extract the data
-        company_id = validated_data.pop('companyID')
-        
+        # 1. Extract the data meant for the Employee/Company
+        company_id = validated_data.pop('compID')
+
         # 2. Create the User
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -27,9 +27,13 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', '')
         )
-        
-        # 3. Find the Company
-        company = Company.objects.filter(compID=company_id).first()
+
+        # 3. Find the Company and create the Employee
+        try:
+            company = Company.objects.get(compID=company_id)
+        except Company.DoesNotExist:
+            # If for some reason the company is missing, we still need to create the profile
+            company = None
 
         # 4. Create the Employee
         employee = Employee.objects.create(
