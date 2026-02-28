@@ -1,37 +1,28 @@
+// src/routes/tasks/+page.server.ts
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-// Import from your $lib folder
-import { mockEmployees, mockTeams, mockTasks } from '$lib/mock_data';
+import { API_URL } from '$lib/config';
 
-export const load: PageServerLoad = async ({ cookies }) => {
-    // 1. Simulate getting the logged-in user
-    const currentUserId = "emp_001"; 
+export const load: PageServerLoad = async ({ fetch, cookies }) => {
+  console.log('cookies:', cookies.getAll());  //
+  const sessionid = cookies.get('sessionid');
+  const csrftoken = cookies.get('csrftoken');
 
-    // 2. Fetch the user's data
-    const user = mockEmployees.find(e => e.EmployeeID === currentUserId);
-    
-    if (!user) {
-        return { status: 404, error: 'User not found' };
+  const res = await fetch(`${API_URL}/tasks/get/`, {
+    headers: {
+      'Cookie': `sessionid=${sessionid}; csrftoken=${csrftoken}`
     }
+  });
 
-    // 3. Fetch the teams the user belongs to
-    const userTeams = mockTeams.filter(t => user.teamIDs.includes(t.teamID));
+  if (!res.ok) throw redirect(302, '/login');
 
-    // 4. Fetch the tasks for those teams
-    const teamIds = userTeams.map(t => t.teamID);
-    const userTasks = mockTasks.filter(task => teamIds.includes(task.TeamID));
+  const data = await res.json();
+  const tasks = data.tasks ?? [];
+  const totalBudget = tasks.reduce((sum: number, t: any) => sum + parseFloat(t.budget), 0);
+  const activeTasksCount = tasks.filter((t: any) => t.status === 'ACTIVE' || t.status === 'IN_PROGRESS').length;
 
-    // 5. Calculate some basic stats for the view
-    const totalBudget = userTasks.reduce((sum, task) => sum + task.Budget, 0);
-    const activeTasksCount = userTasks.filter(t => t.Status === 'active' || t.Status === 'in progress').length;
-
-    // 6. Return the data to the Svelte component
-    return {
-        user,
-        teams: userTeams,
-        tasks: userTasks,
-        stats: {
-            totalBudget,
-            activeTasksCount
-        }
-    };
-};;
+  return {
+    tasks,
+    stats: { totalBudget, activeTasksCount }
+  };
+};

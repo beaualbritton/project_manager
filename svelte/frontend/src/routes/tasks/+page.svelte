@@ -1,6 +1,6 @@
 <script lang="ts">
     let { data } = $props();
-    let { user, teams, tasks, stats } = data;
+    let { tasks, stats } = data;
 
     function formatDate(dateString: string) {
         return new Date(dateString).toLocaleDateString('en-US', { 
@@ -15,17 +15,11 @@
 
 <div class="min-h-screen bg-gray-50 p-8 font-sans text-gray-900">
     <div class="mx-auto max-w-5xl">
-        
+
         <!-- Header Section -->
         <header class="mb-8 flex items-end justify-between">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">My Tasks</h1>
-                <p class="mt-1 text-gray-500">
-                    Welcome back, {user?.Name} 
-                    <span class="ml-2 inline-flex items-center rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                        {user?.Position}
-                    </span>
-                </p>
             </div>
             <div class="text-right">
                 <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Active Budget</p>
@@ -33,35 +27,24 @@
             </div>
         </header>
 
-        <!-- Teams Overview -->
-        <div class="mb-8 flex gap-2">
-            {#each teams as team}
-                <div class="rounded-lg border border-gray-200 bg-white px-4 py-2 shadow-sm">
-                    <span class="text-sm font-medium text-gray-700">{team?.Name}</span>
-                </div>
-            {/each}
-        </div>
-
         <!-- Tasks Grid -->
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {#each tasks as task}
-                {@const overdue = isOverdue(task.DateTimeEnd) && task.Status !== 'complete'}
-                
-                <!-- Changed from div to an anchor tag to make the whole card clickable -->
+                {@const overdue = isOverdue(task.end_date) && task.status !== 'COMPLETE'}
+
                 <a 
-                    href="/tasks/{task.TaskID}" 
+                    href="/tasks/{task.taskID}" 
                     class="relative flex flex-col rounded-xl border bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {overdue ? 'border-red-200' : 'border-gray-200'}"
                 >
-                    
                     <!-- Status Badge -->
                     <div class="mb-4 flex items-center justify-between">
                         <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset
-                            {task.Status === 'complete' ? 'bg-green-50 text-green-700 ring-green-600/20' : 
-                             task.Status === 'in progress' ? 'bg-blue-50 text-blue-700 ring-blue-700/10' : 
+                            {task.status === 'COMPLETE' ? 'bg-green-50 text-green-700 ring-green-600/20' : 
+                             task.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-700 ring-blue-700/10' : 
                              'bg-gray-50 text-gray-600 ring-gray-500/10'}">
-                            {task.Status.toUpperCase()}
+                            {task.status}
                         </span>
-                        
+
                         {#if overdue}
                             <span class="flex items-center text-xs font-semibold text-red-600">
                                 <svg class="mr-1 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -73,19 +56,19 @@
                     </div>
 
                     <!-- Task Details -->
-                    <h3 class="mb-1 text-lg font-semibold text-gray-900">{task.Name}</h3>
-                    <p class="mb-4 text-sm text-gray-500">ID: {task.TaskID}</p>
+                    <h3 class="mb-1 text-lg font-semibold text-gray-900">{task.name}</h3>
+                    <p class="mb-4 text-sm text-gray-500">Team: {task.team?.name}</p>
 
                     <div class="mt-auto space-y-3 border-t border-gray-100 pt-4">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-500">Due Date</span>
                             <span class="font-medium {overdue ? 'text-red-600' : 'text-gray-900'}">
-                                {formatDate(task.DateTimeEnd)}
+                                {formatDate(task.end_date)}
                             </span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-500">Budget</span>
-                            <span class="font-medium text-gray-900">${task.Budget.toLocaleString()}</span>
+                            <span class="font-medium text-gray-900">${parseFloat(task.budget).toLocaleString()}</span>
                         </div>
                     </div>
                 </a>

@@ -1,44 +1,36 @@
 // src/routes/tasks/[id]/+page.server.ts
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { mockTasks, mockTeams, mockEmployees, mockSubtasks } from '$lib/mock_data';
+import { API_URL } from '$lib/config';
 
-export const load: PageServerLoad = async ({ params }) => {
-    // 1. Get the ID from the URL (e.g., "task_1")
-    const taskId = params.id;
+export const load: PageServerLoad = async ({ fetch, cookies, params }) => {
+  const sessionid = cookies.get('sessionid');
+  const csrftoken = cookies.get('csrftoken');
 
-    // 2. Find the specific task
-    const task = mockTasks.find(t => t.TaskID === taskId);
-    
-    // If the task doesn't exist, throw a 404
-    if (!task) {
-        throw error(404, { message: 'Task not found' });
+  const res = await fetch(`${API_URL}/tasks/get/`, {
+    headers: {
+      'Cookie': `sessionid=${sessionid}; csrftoken=${csrftoken}`
     }
+  });
 
-    // 3. Get related data to make the view rich
-    const team = mockTeams.find(t => t.teamID === task.TeamID);
-    
-    // Find all employees assigned to this team
-    const teamMembers = mockEmployees.filter(e => e.teamIDs.includes(task.TeamID));
-    
-    // 4. Get the subtasks/checklist items for this specific task
-    const subtasks = mockSubtasks.filter(st => st.TaskID === taskId);
+  if (!res.ok) throw redirect(302, '/login');
 
-    // Calculate progress percentage
-    const completedSubtasks = subtasks.filter(st => st.IsComplete).length;
-    const progressPercentage = subtasks.length > 0 
-        ? Math.round((completedSubtasks / subtasks.length) * 100) 
-        : 0;
+  const data = await res.json();
+  const task = (data.tasks ?? []).find((t: any) => t.taskID === params.id);
+  if (!task) throw error(404, { message: 'Task not found' });
 
-    return {
-        task,
-        team,
-        teamMembers,
-        subtasks,
-        progress: {
-            percentage: progressPercentage,
-            completed: completedSubtasks,
-            total: subtasks.length
-        }
-    };
+  const subtasks = task.subtasks ?? [];
+  const completedSubtasks = subtasks.filter((s: any) => s.status === 'COMPLETE').length;
+
+  return {
+    task,
+    team: task.team ?? null,
+    teamMembers: [],
+    subtasks,
+    progress: {
+      percentage: subtasks.length > 0 ? Math.round((completedSubtasks / subtasks.length) * 100) : 0,
+      completed: completedSubtasks,
+      total: subtasks.length
+    }
+  };
 };
