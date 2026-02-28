@@ -62,3 +62,19 @@ class Task(models.Model):
 
     def __str__(self):
         return self.name
+
+class SubTask(models.Model):
+    STATUS_CHOICES = [
+        ('COMPLETE', 'Complete'),
+        ('INCOMPLETE', 'Incomplete')
+    ]
+
+    subtaskID = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='INCOMPLETE')
+    
+    # Links subtask to a task
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='subtasks')
+
+    def __str__(self):
+        return self.name
