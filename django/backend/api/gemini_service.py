@@ -1,6 +1,8 @@
 import os
+import django
 from django.conf import settings
 from google import genai
+from .gemini_tools import AVAILABLE_TOOLS
 
 # This allows the script to work even if Django isn't fully loaded
 def get_client():
@@ -12,6 +14,7 @@ def get_gemini_response(prompt):
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
+        config={'tools': AVAILABLE_TOOLS}
     )
     return response.text
 
@@ -25,17 +28,7 @@ if __name__ == "__main__":
     sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent))
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
     
-    import django
     django.setup()
 
     print(get_gemini_response("Say 'The backend is connected'"))
-# Encapsulates all AI logic
-import google.generativeai as genai
-from django.conf import settings
 
-genai.configure(api_key=settings.GEMINI_API_KEY)
-
-def get_gemini_response(prompt):
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    response = model.generate_content(prompt)
-    return response.text
