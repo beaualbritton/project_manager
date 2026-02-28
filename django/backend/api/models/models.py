@@ -17,13 +17,13 @@ class Team(models.Model):
 class Employee(models.Model):
     employeeID = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile')
-    
+
     POSITION_CHOICES = [
         ('LEAD', 'Team Lead'),
         ('MEMBER', 'Member'),
     ]
     position = models.CharField(max_length=10, choices=POSITION_CHOICES, default='MEMBER')
-    
+
     # Fixed: Removed duplicates and kept the detailed versions
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='employees', null=True)
     teams = models.ManyToManyField(Team, blank=True, related_name='members')
