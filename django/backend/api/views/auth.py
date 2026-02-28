@@ -1,11 +1,11 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework import status
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 
-# alias
-create_employee = Employee.objects.create_user
-
+from .serializers import RegisterSerializer
 
 @api_view(["GET"])
 def check(request):
@@ -23,5 +23,15 @@ def login(request):
     user = authenticate(username=username, password=password)
 
 @api_view(["POST"])
+@permission_classes([AllowAny]) # Allows access even if not logged in
 def register(request):
-    
+    serializer = RegisterSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "message": "User and Employee profile created successfully."
+        }, status=status.HTTP_201_CREATED)
+
+    # If validation fails, return the specific errors (e.g., "Username already taken")
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
