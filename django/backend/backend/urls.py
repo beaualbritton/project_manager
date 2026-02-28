@@ -22,7 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('api/auth/check', check),
-    path('api/auth/login/', login),
-    path('api/auth/register/', register),
+    path('api/auth/login/', login, name='login'),
+    path('api/auth/register/', register, name='register'),
     path('api/auth/logout/', logout),
 ]
