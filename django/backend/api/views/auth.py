@@ -12,7 +12,7 @@ def check(request):
     return Response({"message": "Authenticated", "user": request.user.username}, status=200)
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+#@permission_classes([AllowAny])
 def csrf_token(request):
     # This manually sets the CSRF cookie and returns the token
     return Response({"csrfToken": get_token(request)})
