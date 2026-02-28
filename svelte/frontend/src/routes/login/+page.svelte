@@ -1,23 +1,23 @@
 <script lang="ts">
-import { register } from "$lib/api/login";
+import { login } from "$lib/api/login";
 import LoginForm from "$lib/components/forms/login_form.svelte";
 
 let status: any= $state();
 let message: string = $state("")
 
 
-async function registerSubmit(username: string, password: string)
+async function loginSubmit(username: string, password: string)
 {
-  let response = await register(username, password);
+  let response = await login(username, password);
 }
 
 </script>
 
 <main>
-  <LoginForm onSubmit={registerSubmit}/>
+  <LoginForm onSubmit={loginSubmit}/>
 
   <h2>
-    sign-up
+    login in
   </h2>
 
   {#if message}

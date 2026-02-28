@@ -29,7 +29,7 @@ export async function login(username: string, password: string)
   return await apiResponse.json();
 }
 
-export async function logout(username: string, password: string)
+export async function logout()
 {
   let csrfToken = await getCsrf();
 
@@ -38,10 +38,11 @@ export async function logout(username: string, password: string)
     headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken},
     //cookies for session 
     credentials: "include",
-    body: JSON.stringify({ username,password }),
   });
+
   return await apiResponse.json();
 }
+
 
 export async function register(username: string, password: string)
 {
