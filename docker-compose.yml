@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./django
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./django/backend/.env
+    networks:
+      - app-network
+
+  frontend:
+    build: ./react
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./react/frontend:/frontend
+      - /frontend/node_modules
+    command: npm run dev -- --host --port 5173
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
