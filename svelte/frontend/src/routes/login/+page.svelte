@@ -15,8 +15,7 @@
 <div class="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
 	<div class="hidden bg-muted lg:block">
 		<div class="flex flex-col justify-center items-center h-full">
-			<h1 class="text-4xl font-bold">ProjectFlow</h1>
-			<p class="text-lg mt-4">Your awesome project management tool</p>
+			<img src="/projectflow-logo.svg" alt="ProjectFlow" class="mt-2" />
 		</div>
 	</div>
 	<div class="flex items-center justify-center py-12">
@@ -29,7 +28,7 @@
 				<CardContent>
 					<div class="grid gap-4">
 						<div class="grid gap-2">
-							<Label for="uesrname">Username</Label>
+							<Label for="username">Username</Label>
 							<Input id="username" type="text" placeholder="m@example.com" required />
 						</div>
 						<div class="grid gap-2">
