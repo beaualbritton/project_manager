@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Employee
+from api.models import Employee
 
 class RegisterSerializer(serializers.ModelSerializer):
     # We use 'name' as the input field but map it to 'username' in the database

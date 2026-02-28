@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 
-from .serializers import RegisterSerializer
+from ..serializers import RegisterSerializer
 
 @api_view(["GET"])
 def check(request):
@@ -48,3 +48,7 @@ def register(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["POST"])
+def logout(request):
+    pass
