@@ -17,8 +17,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # 1. Extract the data meant for the Employee/Company
-        company_id = validated_data.pop('companyID')
-        
+        company_id = validated_data.pop('compID')
+
         # 2. Create the User
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -27,7 +27,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', '')
         )
-        
+
         # 3. Find the Company and create the Employee
         try:
             company = Company.objects.get(compID=company_id)
@@ -39,5 +39,38 @@ class RegisterSerializer(serializers.ModelSerializer):
             user=user,
             company=company
         )
-        
+
         return user
+
+
+class EmployeeListSerializer(serializers.ModelSerializer):
+    # Mapping model fields to specific JSON keys with capitalization
+    EmployeeID = serializers.UUIDField(source='employeeID')
+    
+    # Concatenating first and last name
+    Name = serializers.SerializerMethodField()
+    
+    # Using get_position_display to get "Team Lead" instead of "LEAD"
+    Position = serializers.CharField(source='get_position_display')
+    
+    # Pulling just the UUIDs of the teams into a list
+    teamIDs = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        read_only=True, 
+        source='teams'
+    )
+    
+    # Pulling the specific company UUID
+    companyID = serializers.UUIDField(source='company.compID', allow_null=True)
+    
+    # Pulling email from the related User model
+    email = serializers.EmailField(source='user.email')
+
+    class Meta:
+        model = Employee
+        fields = ['EmployeeID', 'Name', 'Position', 'teamIDs', 'companyID', 'email']
+
+    def get_Name(self, obj):
+        # Combines first and last name, or falls back to username if names aren't set
+        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return full_name if full_name else obj.user.username
