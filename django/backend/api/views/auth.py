@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login as django_login
+from django.contrib.auth import logout as django_logout
 from django.middleware.csrf import get_token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -24,7 +25,7 @@ def login(request):
     password = request.data.get("password")
 
     # 1. Verify credentials
-    user = authenticate(username=username, password=password)
+    user = authenticate(request, username=username, password=password)
     if user is not None:
         # 2. Establish the session
         # This is required for session-based auth and CSRF rotation
@@ -51,4 +52,5 @@ def register(request):
 
 @api_view(["POST"])
 def logout(request):
-    pass
+    django_logout(request)
+    return Response({"message": "User logged out."}, status=status.HTTP_200_OK)
