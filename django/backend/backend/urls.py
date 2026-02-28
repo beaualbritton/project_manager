@@ -22,6 +22,8 @@ from api.views import logout
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    path('api/auth/check', check),
     path('api/auth/login/', login),
     path('api/auth/register/', register),
     path('api/auth/logout/', logout),
