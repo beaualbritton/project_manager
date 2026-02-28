@@ -1,9 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from api.gemini_service import get_gemini_response
 
 class GeminiChatView(APIView):
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         prompt = request.data.get('prompt')
         if not prompt:
