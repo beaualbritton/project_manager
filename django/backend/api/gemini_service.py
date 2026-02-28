@@ -12,7 +12,7 @@ def get_client():
 def get_gemini_response(prompt):
     client = get_client()
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-flash-latest",
         contents=prompt,
         config={'tools': AVAILABLE_TOOLS}
     )

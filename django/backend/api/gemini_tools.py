@@ -1,7 +1,23 @@
 from .models import Task, Employee, Team, SubTask
 from .serializers import EmployeeListSerializer, TeamListSerializer
+from django.db.models import Q
 
 # Define functions that match your endpoint logic
+def get_from_username(employee_name: str):
+    try:
+        # We search across username, first name, and last name (case-insensitive)
+        employee = Employee.objects.filter(
+            Q(user__username__icontains=employee_name) |
+            Q(user__first_name__icontains=employee_name) |
+            Q(user__last_name__icontains=employee_name)
+        ).first()
+
+        if employee:
+            return str(employee.employeeID)
+        return "Employee not found."
+    except Exception as e:
+        return f"Error: {str(e)}"
+
 def list_tasks(employee_id: str):
     """Retrieves all tasks and subtasks for a specific employee's teams."""
     try:
